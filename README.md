@@ -10,11 +10,12 @@
 
 ```groovy
 pipeline {
-    agent any
+    agent any  // Executes on any available agent
 
     stages {
         stage('Git Checkout') {
             steps {
+                // Step to checkout code from Git repository
                 git 'https://github.com/KGoksal/CountryBank-JenkinsFile.git'
             }
         }
@@ -22,9 +23,10 @@ pipeline {
         stage('OWASP Dependency Check') {
             steps {
                 script {
-                    // Run Dependency Check
-                    def dependencyCheck = tool name: 'DC', type: 'org.jenkinsci.plugins.DependencyCheck.DependencyCheckInstaller'
-                    sh "${dependencyCheck}/bin/dependency-check.sh --scan . --format XML --out ."
+                    // Run OWASP Dependency Check
+                    dependencyCheck additionalArguments: '--scan ./', odcInstallation: 'DC'
+                    // Publish Dependency Check results as artifacts
+                    dependencyCheckPublisher pattern: '**/dependency-check-report.xml'
                 }
             }
         }
@@ -32,7 +34,7 @@ pipeline {
         stage('Trivy') {
             steps {
                 script {
-                    // Run Trivy
+                    // Run Trivy with quiet mode enabled
                     sh "trivy --quiet fs ."
                 }
             }
@@ -47,14 +49,8 @@ pipeline {
             }
         }
     }
-
-    post {
-        always {
-            // Archive Dependency Check XML report
-            archiveArtifacts '**/dependency-check-report.xml'
-        }
-    }
 }
+
 ```
 
 ### Explanation:
