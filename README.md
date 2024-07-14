@@ -1,3 +1,86 @@
+# JENKINSFILE: 
+
+1. **Dependency Check Step**:
+   - The `dependencyCheck` step in your script is used to execute the Dependency Check tool itself, but it seems there might be confusion with the syntax or usage of parameters.
+
+2. **Trivy Step**:
+   - The `sh` step is used to execute shell commands. However, the `trivy fs .` command might not be valid depending on how Trivy is installed and configured on your Jenkins environment.
+
+
+
+```groovy
+pipeline {
+    agent any
+
+    stages {
+        stage('Git Checkout') {
+            steps {
+                git 'https://github.com/KGoksal/CountryBank-JenkinsFile.git'
+            }
+        }
+
+        stage('OWASP Dependency Check') {
+            steps {
+                script {
+                    // Run Dependency Check
+                    def dependencyCheck = tool name: 'DC', type: 'org.jenkinsci.plugins.DependencyCheck.DependencyCheckInstaller'
+                    sh "${dependencyCheck}/bin/dependency-check.sh --scan . --format XML --out ."
+                }
+            }
+        }
+
+        stage('Trivy') {
+            steps {
+                script {
+                    // Run Trivy
+                    sh "trivy --quiet fs ."
+                }
+            }
+        }
+
+        stage('Build & deploy') {
+            steps {
+                script {
+                    // Example command to build and deploy using Docker Compose
+                    sh "docker-compose up -d"
+                }
+            }
+        }
+    }
+
+    post {
+        always {
+            // Archive Dependency Check XML report
+            archiveArtifacts '**/dependency-check-report.xml'
+        }
+    }
+}
+```
+
+### Explanation:
+
+- **Git Checkout Stage**: Checks out the repository from GitHub.
+  
+- **OWASP Dependency Check Stage**:
+  - Uses the `tool` step to ensure that the Dependency Check tool (`DC`) is installed and configured. Adjust `type` parameter (`org.jenkinsci.plugins.DependencyCheck.DependencyCheckInstaller`) according to your Jenkins configuration.
+  - Executes Dependency Check using the `sh` step. It runs the `dependency-check.sh` script with the `--scan .` option to scan all files in the workspace directory (`.`) for vulnerabilities. Adjust `--format` and `--out` options as needed.
+
+- **Trivy Stage**:
+  - Executes Trivy with the `sh` step. Adjust the command based on how Trivy is installed on your Jenkins environment. Here, `trivy --quiet fs .` is used to scan the filesystem (`fs`) starting from the current directory (`.`). Adjust options (`--quiet`, `--exit-code`) as per your Trivy configuration.
+
+- **Build & Deploy Stage**: Example step to build and deploy using Docker Compose. Replace with your actual build and deployment commands.
+
+- **Post Section**: Archives the Dependency Check XML report (`dependency-check-report.xml`) as artifacts. Adjust the pattern (`**/dependency-check-report.xml`) according to your report file name and location.
+
+### Notes:
+- Make sure that Dependency Check (`DC`) and Trivy are correctly installed and configured on your Jenkins server.
+- Adjust paths and options (`--scan`, `--format`, `--out`, etc.) in Dependency Check and Trivy commands based on your project setup and tool versions.
+- Always test changes in a development environment before applying them to production.
+
+
+************************************************************
+
+
 [![Build Status](https://travis-ci.org/nikitap492/CountryBank.svg?branch=master)](https://travis-ci.org/nikitap492/CountryBank)
 [![codecov.io](https://codecov.io/github/nikitap492/CountryBank/coverage.svg?branch=master)](https://travis-ci.org/nikitap492/CountryBank?branch=master)
 [![CodeFactor](https://www.codefactor.io/repository/github/nikitap492/countrybank/badge)](https://www.codefactor.io/repository/github/nikitap492/countrybank)
